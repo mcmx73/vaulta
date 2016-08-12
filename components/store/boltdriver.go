@@ -5,8 +5,8 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/DeepForestTeam/mobiussign/components/config"
 	"github.com/DeepForestTeam/mobiussign/components/log"
-	"github.com/mcmx73/vaulta/store/components/store/codecs/json"
-	"github.com/mcmx73/vaulta/store/components/store/codecs/bson"
+	"github.com/mcmx73/vaulta/components/store/codecs/json"
+	"github.com/mcmx73/vaulta/components/store/codecs/bson"
 	"sync"
 	"bytes"
 	"encoding/binary"
@@ -173,7 +173,7 @@ func (this *BoltDriver)Get(bucket_name, key string, data interface{}) (err error
 	return
 }
 
-func (this *BoltDriver)Count(bucket_name string) (count int, err error) {
+func (this *BoltDriver)Count(bucket_name string) (count int64, err error) {
 	this.lockBucket(bucket_name)
 	defer this.unlockBucket(bucket_name)
 	err = this.db.View(func(tx *bolt.Tx) error {
@@ -182,7 +182,7 @@ func (this *BoltDriver)Count(bucket_name string) (count int, err error) {
 			return err
 		}
 		stats := bucket.Stats()
-		count = stats.KeyN
+		count = int64(stats.KeyN)
 		return err
 	})
 	return
@@ -262,8 +262,6 @@ func (this *BoltDriver)setCodec(name string) {
 	switch name {
 	case "json":
 		this.Codec = json.Codec
-	case "gob":
-		this.Codec = gob.Codec
 	case "bson":
 		this.Codec = bson.Codec
 	}

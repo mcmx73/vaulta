@@ -4,6 +4,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+
 var Codec = new(bsonCodec)
 
 type bsonCodec int

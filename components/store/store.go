@@ -13,7 +13,7 @@ type StorageDriver interface {
 	Close()
 	Set(section, key string, data interface{}) (int64, error)
 	Get(section, key string, data interface{}) error
-	Count(section string) (int, error)
+	Count(section string) (int64, error)
 	Last(section string, data interface{}) (string, error)
 	IsKeyExist(section string, key string) (bool, error)
 }
@@ -49,6 +49,6 @@ func IsKeyExist(model_name string, key string) (bool, error) {
 	return storage.driver.IsKeyExist(model_name, key)
 }
 
-func Count(model_name string) (count int, err error) {
+func Count(model_name string) (count int64, err error) {
 	return storage.driver.Count(model_name)
 }
