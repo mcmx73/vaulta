@@ -16,6 +16,7 @@ type StorageDriver interface {
 	Count(section string) (int64, error)
 	Last(section string, data interface{}) (string, error)
 	IsKeyExist(section string, key string) (bool, error)
+	GetRandomBlock(section string, data interface{}) (string, error)
 }
 
 var storage GlobalStore
@@ -51,4 +52,8 @@ func IsKeyExist(model_name string, key string) (bool, error) {
 
 func Count(model_name string) (count int64, err error) {
 	return storage.driver.Count(model_name)
+}
+
+func GetRandomBlock(model_name string, object interface{}) (key string, err error) {
+	return storage.driver.GetRandomBlock(model_name, object)
 }

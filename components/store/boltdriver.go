@@ -10,6 +10,8 @@ import (
 	"sync"
 	"bytes"
 	"encoding/binary"
+	"math/rand"
+	"time"
 )
 
 type EncodeDecoder interface {
@@ -250,6 +252,38 @@ func (this *BoltDriver)IsKeyExist(bucket_name string, key string) (exist bool, e
 	return
 }
 
+func (this *BoltDriver)GetRandomBlock(bucket_name string, data interface{}) (index_key string, err error) {
+	err = this.db.Update(func(tx *bolt.Tx) error {
+		index_bucket, err := this.getBucket(tx, bucket_name + indexPostfix)
+		bucket, err := this.getBucket(tx, bucket_name)
+		max_key, err := this.Count(bucket_name)
+		if err != nil {
+			log.Error(err)
+			return err
+		}
+		max_key = max_key - 1
+		rand.Seed(time.Now().Unix())
+		rnd_index := rand.Int63n(int64(max_key))
+		key := uintToBytes(uint64(rnd_index))
+		_, random_index_key := index_bucket.Cursor().Seek(key)
+		val := bucket.Get(random_index_key)
+		if len(val) == 0 {
+			return ErrKeyNotFound
+		}
+		store_object := StorageObject{}
+		store_object.Data = data
+		err = this.Codec.Decode(val, &store_object)
+		if err == nil {
+			data = store_object.Data
+			index_key = string(random_index_key)
+		}
+		if err != nil {
+			log.Error(err)
+		}
+		return err
+	})
+	return
+}
 func (this *BoltDriver)getBucket(tx *bolt.Tx, bucket_name string) (bucket *bolt.Bucket, err error) {
 	bucket = tx.Bucket([]byte(bucket_name))
 	if bucket == nil {
