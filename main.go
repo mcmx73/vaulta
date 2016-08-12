@@ -25,11 +25,12 @@ func main() {
 		tapeblock.FillRandom(10000)
 		log.Debug("Now total blocks:", tapeblock.TotalCoutunt())
 	}
-	tapeblock.BlockData = []byte("The Ultimate Question of Life, the Universe, and Everything:42")
+	tapeblock.BlockData = []byte("The Ultimate Question of Life, the Universe, and Everything:42....")
 	offset, key, err := tapeblock.Encrypt()
 	//8bc9d18124f1a18d 1190ec32be94eeb0
 	decrypt_test := tapeencript.TapeBlock{BlockId:offset}
 	decrypt_test.Decrypt(key)
+	log.Warning("decrypt: [", string(decrypt_test.BlockData), "]")
 	log.Debug(offset, key, err)
 	err = forest.StartServer()
 	log.Fatal(err)

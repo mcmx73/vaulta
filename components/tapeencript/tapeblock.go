@@ -51,6 +51,8 @@ func (this *TapeBlock)Decrypt(key_index string) (err error) {
 	if err != nil {
 		max_block_size = 16374
 	}
+	log.Warning("ENC FIRST:", this.BlockData[0:7])
+	log.Warning("ENC LAST:", this.BlockData[int(max_block_size):int(max_block_size + 9)])
 	key_block := TapeBlock{}
 	key_block.BlockId = key_index
 	err = key_block.Load()
@@ -60,15 +62,20 @@ func (this *TapeBlock)Decrypt(key_index string) (err error) {
 		generateRandBlock(&key_block.BlockData)
 		key_block.Save()
 	}
-	decrypted_data := make([]byte, max_block_size + 10)
-	for i := 0; i < int(max_block_size); i++ {
-		decrypted_data[i] = this.BlockData[i] ^ key_block.BlockData[i]
+	decrypted_raw_data := make([]byte, len(this.BlockData))
+	for i, enc_byte := range this.BlockData {
+		decrypted_raw_data[i] = enc_byte ^ key_block.BlockData[i]
 	}
+	this.BlockData = decrypted_raw_data
 	data_len_bytes := make([]byte, 2)
-	data_len_bytes[0] = decrypted_data[int(max_block_size - 8)]
-	data_len_bytes[1] = decrypted_data[int(max_block_size - 9)]
+	data_len_bytes[0] = decrypted_raw_data[int(max_block_size + 8)]
+	data_len_bytes[1] = decrypted_raw_data[int(max_block_size + 9)]
 	data_len := bytesToInt16(data_len_bytes)
-	log.Debug("DL:", data_len)
+	if data_len < int16(max_block_size) {
+		this.BlockData = decrypted_raw_data[0:data_len]
+	} else {
+		this.BlockData = decrypted_raw_data
+	}
 	return
 }
 func (this *TapeBlock)Encrypt() (block_index, key_index string, err error) {
@@ -81,20 +88,13 @@ func (this *TapeBlock)Encrypt() (block_index, key_index string, err error) {
 	}
 	key_block := TapeBlock{}
 	key_index, err = store.GetRandomBlock(TapeStore, &key_block)
-	source_data := this.BlockData
-	data_len := int64(len(source_data))
-	this.BlockData = make([]byte, max_block_size + 10)
-	for index, val := range source_data {
-		this.BlockData[index] = val
-	}
+	data_len := int64(len(this.BlockData))
 	if data_len < max_block_size {
-		fill_from := data_len
 		fill_len := max_block_size - data_len
 		fill_bytes := make([]byte, fill_len)
 		rand.Read(fill_bytes)
-		for index, val := range fill_bytes {
-			this.BlockData[index + int(fill_from)] = val
-		}
+		this.BlockData = append(this.BlockData, fill_bytes...)
+		this.BlockData = append(this.BlockData, make([]byte, 10)...)
 		data_len_bytes := int16ToBytes(int16(data_len))
 		log.Debug(len(data_len_bytes))
 		this.BlockData[max_block_size + 8] = data_len_bytes[0]
@@ -142,7 +142,7 @@ func generateRandBlock(block *[]byte) {
 	if err != nil {
 		max_block_size = 16374
 	}
-	*block = make([]byte, max_block_size)
+	*block = make([]byte, max_block_size + 10)
 	rand.Read(*block)
 
 }
