@@ -51,8 +51,6 @@ func (this *TapeBlock)Decrypt(key_index string) (err error) {
 	if err != nil {
 		max_block_size = 16374
 	}
-	log.Warning("ENC FIRST:", this.BlockData[0:7])
-	log.Warning("ENC LAST:", this.BlockData[int(max_block_size):int(max_block_size + 9)])
 	key_block := TapeBlock{}
 	key_block.BlockId = key_index
 	err = key_block.Load()
@@ -96,7 +94,6 @@ func (this *TapeBlock)Encrypt() (block_index, key_index string, err error) {
 		this.BlockData = append(this.BlockData, fill_bytes...)
 		this.BlockData = append(this.BlockData, make([]byte, 10)...)
 		data_len_bytes := int16ToBytes(int16(data_len))
-		log.Debug(len(data_len_bytes))
 		this.BlockData[max_block_size + 8] = data_len_bytes[0]
 		this.BlockData[max_block_size + 9] = data_len_bytes[1]
 	}
@@ -154,7 +151,6 @@ func int16ToBytes(num int16) []byte {
 }
 func bytesToInt16(v []byte) (num int16) {
 	buf := bytes.NewReader(v)
-	err := binary.Read(buf, binary.BigEndian, &num)
-	log.Debug(err)
+	_ = binary.Read(buf, binary.BigEndian, &num)
 	return
 }
